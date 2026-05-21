@@ -10,7 +10,12 @@ FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y socat && rm -rf /var/lib/apt/lists/*
 RUN useradd -m -u 10001 ctf
 COPY --from=build /src/vuln /home/ctf/vuln
-COPY flag.txt /home/ctf/flag.txt
+# Flag is injected at build time from a build-arg (sourced from .env via
+# docker-compose), NOT copied from a tracked file. This avoids the classic
+# "COPY flag.txt: not found" break when .gitignore strips flag files in transit,
+# and keeps the real flag out of version control entirely.
+ARG FLAG="CTF{placeholder_set_PWN_FLAG_in_dotenv}"
+RUN echo "$FLAG" > /home/ctf/flag.txt
 RUN chmod 0444 /home/ctf/flag.txt && chmod 0555 /home/ctf/vuln
 USER ctf
 WORKDIR /home/ctf

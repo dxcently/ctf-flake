@@ -12,4 +12,5 @@ MYSQL_ROOT_PASSWORD=$(rand 32)
 MYSQL_PASSWORD=$(rand 32)
 EOL
 chmod 600 .env
+echo "PWN_FLAG=CTF{sm4sh_the_stack_f0r_fun_and_pr0fit}" >> .env
 echo "Wrote .env with fresh secrets (mode 600)."

@@ -88,7 +88,10 @@ services:
       - ALL
 
   pwn-stackoverflow:
-    build: ./challenges/pwn-stackoverflow
+    build:
+      context: ./challenges/pwn-stackoverflow
+      args:
+        FLAG: ${PWN_FLAG}
     restart: always
     ports:
       - "9002:9999"
