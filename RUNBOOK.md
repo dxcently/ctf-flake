@@ -180,9 +180,9 @@ actual club subnet.
 sudo apt install -y ufw
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
-sudo ufw allow from 192.168.50.0/24 to any port 22 proto tcp     # SSH (admins)
+sudo ufw allow from 192.168.50.0/24 to any port 22 proto tcp     # SSH
 sudo ufw allow from 192.168.50.0/24 to any port 8000 proto tcp   # CTFd
-sudo ufw allow from 192.168.50.0/24 to any port 9001:9004 proto tcp  # challenges
+sudo ufw allow from 192.168.50.0/24 to any port 9001:9005 proto tcp  # challenges
 sudo ufw enable
 sudo ufw status verbose
 ```
@@ -191,6 +191,41 @@ Note: Docker can bypass ufw by writing iptables rules directly. Because we only
 publish the intended ports in compose and the challenge net is `internal`, the
 exposure is limited to those ports — but for extra assurance keep this box on an
 isolated VLAN regardless.
+
+---
+
+## 7a. SSH access — what it grants, and hardening
+
+You've chosen to let **any club member on the LAN** SSH into this host. That's
+reasonable for a club where members log in to practice, but understand what it
+is: SSH gives a shell on the *host itself*, which is fundamentally more powerful
+than attacking a challenge container. A member with host shell access can read
+the challenge source (and thus the flags), see other members' files, and
+restart or tamper with challenges. The challenge containers are a sandbox; the
+host shell is **not**. So treat SSH access as a trust grant, and harden it:
+
+```bash
+# Edit /etc/ssh/sshd_config and set:
+#   PasswordAuthentication no      # keys only — no brute-forceable passwords
+#   PermitRootLogin no             # never SSH in as root
+#   AllowUsers ctfadmin alice bob  # explicit allowlist of who may log in
+sudo nano /etc/ssh/sshd_config
+sudo systemctl restart ssh
+```
+
+Then, crucially, keep members as **ordinary users**:
+
+- Do **not** add players to the `docker` group — that group is root-equivalent
+  on the host (it can mount the whole filesystem into a container). Only trusted
+  admins go in `docker`.
+- Do **not** give players `sudo`.
+- Each member gets their own account with their own SSH public key
+  (`~/.ssh/authorized_keys`), so access is per-person and revocable.
+
+If later you want members to reach challenges remotely *without* a host shell,
+the safer pattern is an SSH tunnel to the challenge ports
+(`ssh -L 9001:localhost:9001 member@host`) rather than widening the firewall —
+but for LAN-only that's optional.
 
 ---
 

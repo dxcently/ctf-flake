@@ -137,6 +137,7 @@ and is published on its own host port. Each runs with a hardening block (see
 | `pwn-stackoverflow`  | pwn       | 9002      | Stack buffer overflow / return hijack    |
 | `crypto-xor`         | crypto    | 9003      | Tiny-keyspace brute force                |
 | `forensics-hidden`   | forensics | 9004      | Data appended after a file's real EOF    |
+| `web-filevault`      | web       | 9005      | Path traversal / Local File Inclusion    |
 
 ---
 
@@ -226,6 +227,15 @@ are still in the file.
 **The lesson:** "looks like an image" ≠ "contains only an image"; inspect raw
 bytes.
 
+### web-filevault
+A Flask "document viewer" builds a file path directly from a user-supplied
+`?file=` parameter with no sanitization. The intended use reads files from a
+`docs/` directory, but `../` sequences escape it and reach any file the process
+can read — including the flag stored outside `docs/`.
+**The lesson:** never build a filesystem path from raw user input; validate
+against an allowlist or resolve and confirm the path stays inside the intended
+directory.
+
 ---
 
 ## 6. Exploit walkthroughs (player view)
@@ -293,6 +303,20 @@ PY
 
 `p64(...)` packs the address into 8 little-endian bytes (how x86-64 stores
 addresses in memory). The 72 comes from `buffer(64) + saved RBP(8)`.
+
+### 6.5 web-filevault (port 9005)
+
+The viewer reads whatever path you put in `?file=`. Walk up out of the `docs/`
+directory with `../` to reach the flag:
+
+```bash
+curl "http://<ip>:9005/view?file=../secret/flag.txt"
+```
+
+The flag lives in `/secret/flag.txt`, one level above the app's `docs/`
+directory, so a single `../` escapes into it. (Depending on how many directories
+deep the app is, you might need more `../` — `../../`, etc. — which is itself a
+realistic part of the lesson.)
 
 ---
 
@@ -415,9 +439,10 @@ only your club network can connect.
 | Challenge            | Flag location in source                    |
 |----------------------|--------------------------------------------|
 | web-cookie-monster   | `app.py`, `FLAG = ...`                      |
-| pwn-stackoverflow    | `flag.txt` (baked into the image)           |
+| pwn-stackoverflow    | `PWN_FLAG` in `.env` (build-arg injected)    |
 | crypto-xor           | `app.py`, `FLAG = ...` (served XOR-encoded)  |
 | forensics-hidden     | `gen.py`, appended to `vacation.png`         |
+| web-filevault        | `WEB_FLAG` in `.env` (build-arg injected)    |
 
 Copy each flag into CTFd's admin UI when you create the challenge entry. Players
 never see these files; they only reach the running services on ports 9001–9004.

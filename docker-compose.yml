@@ -143,6 +143,33 @@ services:
     cap_drop:
       - ALL
 
+  # web-filevault: a path-traversal / Local File Inclusion challenge. Like the
+  # pwn challenge, its flag is injected at build time from .env (WEB_FLAG).
+  # It needs to WRITE its seed documents at startup, but read_only makes the
+  # root FS immutable — so /app/docs is mounted as a writable tmpfs.
+  web-filevault:
+    build:
+      context: ./challenges/web-filevault
+      args:
+        FLAG: ${WEB_FLAG}
+    restart: always
+    ports:
+      - "9005:80"
+    networks:
+      - challenge_net
+    read_only: true
+    tmpfs:
+      - /tmp
+      # Writable scratch for seeded docs. mode=0777 + uid so the non-root app
+      # (uid 10001) can create files here despite the read-only root FS.
+      - /app/docs:mode=1777,uid=10001,gid=10001
+    mem_limit: 128m
+    pids_limit: 50
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
 volumes:
   ctfd_uploads:
   ctfd_logs:

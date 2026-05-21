@@ -98,6 +98,7 @@ Services and where they land:
 | pwn-stackoverflow    | pwn challenge      | `nc <host-ip> 9002`         |
 | crypto-xor           | crypto challenge   | `http://<host-ip>:9003`     |
 | forensics-hidden     | forensics challenge| `http://<host-ip>:9004`     |
+| web-filevault        | web challenge (LFI)| `http://<host-ip>:9005`     |
 
 Open `http://<host-ip>:8000`, complete CTFd's one-time admin setup, then add
 each challenge in the admin UI with its flag, category, and points. (Flags: pwn
