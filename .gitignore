@@ -1,0 +1,4 @@
+.env
+**/flag.txt
+*.png
+result

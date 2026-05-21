@@ -1,0 +1,159 @@
+# =============================================================================
+# CTF stack for a LAN-only club event.
+#
+# NETWORK ISOLATION IS THE WHOLE POINT OF THIS FILE. Read the network section
+# at the bottom before changing anything.
+#
+#   - `platform` network: CTFd + its DB + cache. Internal-only between
+#     themselves; CTFd's web port is published to the host LAN.
+#   - `challenge_net` network: marked `internal: true`, meaning containers on it
+#     have NO route out to the internet or to the rest of your network. A
+#     compromised challenge box cannot phone home, cannot pivot to your real
+#     infra, cannot be used to attack other hosts. Players reach challenges via
+#     the host ports we publish, but the challenges themselves are boxed in.
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # CTFd: the scoreboard / challenge-description / flag-submission web app.
+  # Pinned to a specific patched version (3.8.2 fixed a root-user issue in the
+  # stock compose file). Runs as the image's unprivileged user by default.
+  # ---------------------------------------------------------------------------
+  ctfd:
+    image: ctfd/ctfd:3.8.2
+    restart: always
+    ports:
+      - "8000:8000"            # published to the host LAN; this is what players browse to
+    environment:
+      - SECRET_KEY=${CTFD_SECRET_KEY}        # set in .env — see RUNBOOK
+      - UPLOAD_FOLDER=/var/uploads
+      - LOG_FOLDER=/var/log/CTFd
+      - DATABASE_URL=mysql+pymysql://ctfd:${MYSQL_PASSWORD}@db/ctfd
+      - REDIS_URL=redis://cache:6379
+      - WORKERS=4
+      - REVERSE_PROXY=true
+    volumes:
+      - ctfd_uploads:/var/uploads
+      - ctfd_logs:/var/log/CTFd
+    depends_on:
+      - db
+      - cache
+    networks:
+      - platform
+
+  db:
+    image: mariadb:10.11
+    restart: always
+    environment:
+      - MARIADB_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MARIADB_USER=ctfd
+      - MARIADB_PASSWORD=${MYSQL_PASSWORD}
+      - MARIADB_DATABASE=ctfd
+    volumes:
+      - ctfd_db:/var/lib/mysql
+    networks:
+      - platform        # DB is reachable only by CTFd, never published to host
+    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --wait_timeout=28800]
+
+  cache:
+    image: redis:7-alpine
+    restart: always
+    networks:
+      - platform        # cache likewise internal to the platform network only
+
+  # ---------------------------------------------------------------------------
+  # CHALLENGES. Each is built locally from ./challenges/<name>. They attach ONLY
+  # to challenge_net (internal). We publish a host port per challenge so LAN
+  # players can connect, but the containers cannot initiate outbound traffic.
+  #
+  # read_only + tmpfs + resource limits mean a player can mess up their own
+  # session but the container resets clean and can't exhaust the host.
+  # ---------------------------------------------------------------------------
+  web-cookie-monster:
+    build: ./challenges/web-cookie-monster
+    restart: always
+    ports:
+      - "9001:80"
+    networks:
+      - challenge_net
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run
+    mem_limit: 256m
+    pids_limit: 100
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  pwn-stackoverflow:
+    build: ./challenges/pwn-stackoverflow
+    restart: always
+    ports:
+      - "9002:9999"
+    networks:
+      - challenge_net
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 256m
+    pids_limit: 100
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # NOTE: pwn challenges need to fork a process per connection. We grant just
+    # enough back below; see the challenge's Dockerfile/socat wrapper.
+
+  crypto-xor:
+    build: ./challenges/crypto-xor
+    restart: always
+    ports:
+      - "9003:80"
+    networks:
+      - challenge_net
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 128m
+    pids_limit: 50
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  forensics-hidden:
+    build: ./challenges/forensics-hidden
+    restart: always
+    ports:
+      - "9004:80"
+    networks:
+      - challenge_net
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 128m
+    pids_limit: 50
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  ctfd_uploads:
+  ctfd_logs:
+  ctfd_db:
+
+networks:
+  # CTFd + DB + cache. Not marked internal because CTFd needs to be reachable,
+  # but only CTFd publishes a port; DB and cache stay private to this network.
+  platform:
+    driver: bridge
+
+  # The cage. `internal: true` removes the default gateway from this network,
+  # so containers on it have no path to the internet or other networks. This is
+  # the single most important line in the file for keeping vulnerable boxes safe.
+  challenge_net:
+    driver: bridge
+    internal: true
