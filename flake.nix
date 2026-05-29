@@ -38,7 +38,7 @@
         ];
 
         # RED TEAM: offense. Recon, web, exploitation, cracking, reversing.
-        # Dual-use security tools — see the ethics banner and TEAM-TOOLKITS.md.
+        # Dual-use security tools — see the ethics banner and RED-TEAM.md.
         # Use ONLY against the club's own CTF targets / authorized systems.
         redTeamTools = with pkgs; [
           # Recon / scanning

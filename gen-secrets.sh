@@ -5,7 +5,9 @@ if [ -f .env ]; then
   echo "Refusing to overwrite existing .env (delete it first if you really mean to)." >&2
   exit 1
 fi
-rand() { head -c "$1" /dev/urandom | base64 | tr -d '/+=' | head -c "$1"; }
+# Draw 3x the requested bytes so stripping '/+=' from the base64 output
+# still leaves enough characters to `head -c "$1"` reliably.
+rand() { head -c "$(( $1 * 3 ))" /dev/urandom | base64 | tr -d '/+=' | head -c "$1"; }
 cat > .env <<EOL
 CTFD_SECRET_KEY=$(head -c 64 /dev/urandom | base64 | tr -d '\n')
 MYSQL_ROOT_PASSWORD=$(rand 32)

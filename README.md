@@ -5,9 +5,20 @@ intentionally vulnerable challenge containers, kept on an isolated network so a
 hacked challenge can't pivot into your real infrastructure.
 
 This is the single general guide: architecture, install, build/run, day-to-day
-ops, and the reasoning behind the non-obvious commands. For challenge intent and
-solutions see `CHALLENGES.md`; for the role-based tool shells see
-`TEAM-TOOLKITS.md`.
+ops, and the reasoning behind the non-obvious commands. For a player's guide to
+the challenges (with progressive hints, no solutions) see `CHALLENGES.md`; for
+the role-based tool shells see `RED-TEAM.md` (offense) and `BLUE-TEAM.md`
+(defense).
+
+## Contents
+
+1. [The big picture](#1-the-big-picture) — two-network safety model, threat model
+2. [Components](#2-components) — services, per-challenge hardening, where Nix fits
+3. [Install from a fresh Ubuntu host](#3-install-from-a-fresh-ubuntu-host) — OS, Docker, Nix, secrets, build, isolation check, firewall, SSH
+4. [Day-to-day operations](#4-day-to-day-operations) — ops, team shells, updates, teardown
+5. [Why the cryptic lines are written the way they are](#5-why-the-cryptic-lines-are-written-the-way-they-are) — compile flags, socat, multi-stage, perms, secret gen, isolation check, ufw scoping
+6. [Troubleshooting](#6-troubleshooting)
+7. [Adding your own challenges](#7-adding-your-own-challenges)
 
 ---
 
@@ -138,7 +149,7 @@ develop` pins the exact versions of the build/exploit tools — `gcc`, `gdb`,
 That matters most for pwn/reversing challenges where compiler and libc affect
 whether an exploit's offsets line up. It also extends to **role-based toolkits**
 (`.#red`, `.#blue`, `.#player`) — same reproducibility, applied to operator
-tools. See `TEAM-TOOLKITS.md`.
+tools. See `RED-TEAM.md` and `BLUE-TEAM.md`.
 
 **What Nix does not do:** it does not run, manage, or isolate any live service.
 On this Ubuntu host, Nix is *not* managing the operating system (that would be
@@ -343,7 +354,7 @@ nix develop .#blue      # blue-team / defense toolkit
 
 GUI tools (Ghidra, Wireshark, Burp) need a desktop — run those from a
 workstation, not the headless server. First entry downloads a lot; cached after.
-See `TEAM-TOOLKITS.md`.
+See `RED-TEAM.md` (offense kit) and `BLUE-TEAM.md` (defense kit).
 
 ### Updating / rebuilding cleanly
 
@@ -493,7 +504,7 @@ only your club network can connect.
 | CTFd won't start, DB errors | DB password mismatch | ensure `.env` `MYSQL_*` values are consistent; `down -v` then up to reset |
 | Challenge reachable but can hit internet | isolation broken | confirm `challenge_net` has `internal: true`; recreate network |
 | Port already in use | another service on 8000/9001-9005 | change the host port mapping in `docker-compose.yml` |
-| `nix develop .#red` very slow first time | large tool closures downloading | expected once; cached after. See `TEAM-TOOLKITS.md` |
+| `nix develop .#red` very slow first time | large tool closures downloading | expected once; cached after. See `RED-TEAM.md` / `BLUE-TEAM.md` |
 | GUI tool won't open on server | headless host, no display | run from a workstation; use CLI equivalents on the server |
 
 ---

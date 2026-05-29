@@ -75,8 +75,11 @@ You can operate and edit challenges with Docker alone. The flake matters when th
 
 ## Reference docs in-tree
 
-Three guides only — don't reintroduce more:
+Four guides — don't reintroduce more:
 
 - `README.md` — general project doc: architecture, install from a fresh Ubuntu host, build/run, day-to-day ops, reasoning behind the non-obvious commands, troubleshooting.
-- `CHALLENGES.md` — per-challenge intent, hints, full exploit walkthroughs (§3 spoils the challenges; keep out of player handouts), and where each flag lives.
-- `TEAM-TOOLKITS.md` — what's in each `nix develop` role shell (`default`, `red`, `blue`, `player`).
+- `CHALLENGES.md` — player-facing guide with progressive hints (Nudge → Push → Lean), no full solutions. Has a small organizer-only flag-location table at the end.
+- `RED-TEAM.md` — offense kit (`nix develop .#red`): what's in it, when to reach for each tool, mapping to the five challenges.
+- `BLUE-TEAM.md` — defense kit (`nix develop .#blue`): packet capture, IDS, forensics, container introspection.
+
+The `default` (authoring) and `.#player` shells are defined in `flake.nix` and called out where relevant from those docs.
