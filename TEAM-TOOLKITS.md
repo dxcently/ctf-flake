@@ -10,7 +10,7 @@ polluting their own machine. Leave the shell and the tools are gone.
 nix develop          # authoring (build/test challenges) — the default
 nix develop .#red    # RED TEAM: offense toolkit
 nix develop .#blue   # BLUE TEAM: defense toolkit
-nix develop .#player # lean offense kit sized to these four challenges
+nix develop .#player # lean offense kit sized to these five challenges
 ```
 
 Each shell prints a banner listing its tools and an authorized-use reminder.
@@ -38,14 +38,14 @@ and testing* challenges.
 
 **`player`** — `nmap`, `curl`, `ffuf`, `gobuster`, `sqlmap`, `python3` +
 `pwntools`/`pycryptodome`, `gdb`, `radare2`, `binwalk`, `exiftool`, `netcat`,
-`socat`. Just enough to solve the four sample challenges.
+`socat`. Just enough to solve the five sample challenges.
 
 ## Authorized use — read this
 
 Every shell carries the same banner because it matters: these are **dual-use
 security tools**. Pointing `nmap`, `sqlmap`, `hashcat`, or `metasploit` at
 systems you don't own or lack written permission to test can be illegal. In this
-project they exist to attack **the club's own CTF targets** (ports 9001–9004 on
+project they exist to attack **the club's own CTF targets** (ports 9001–9005 on
 the CTF host) and nothing else. Staying in scope is each user's responsibility.
 
 ## Caveats worth knowing
