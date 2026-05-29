@@ -13,15 +13,73 @@ player-level challenge guidance see `CHALLENGES.md`; for the offense kit see
 
 ---
 
-## 1. Enter the shell
+## 1. How to connect
+
+### 1.1 SSH to the CTF host (you'll need it)
+
+Most blue work happens *on* the host. Packet capture needs root and a real
+NIC; container introspection (`dive`, `docker inspect`) needs access to the
+local Docker daemon. So unlike a red player attacking from a laptop, you
+typically want a shell on the box.
+
+```bash
+ssh <user>@<host>
+cd ctf-flake
+```
+
+See README §3.8 for the SSH hardening setup (keys only, no root, no `docker`
+group for non-admins). If you don't have an account on the host, you're
+not the person responsible for defense — talk to an organizer.
+
+### 1.2 Enter the blue shell
 
 ```bash
 nix develop .#blue
 ```
 
-First entry pulls a large closure — Suricata, Zeek, Wireshark, Ghidra-free RE
-tooling. Subsequent entries are instant from the Nix store. Leave the shell
-and the tools are gone.
+First entry pulls a large closure — Suricata, Zeek, Wireshark, RE tooling.
+Subsequent entries are instant from the Nix store. Leave the shell and the
+tools are gone.
+
+You can also run the blue shell on your own workstation if you've copied
+artifacts off the host (pcaps, suspect files) for offline analysis. The GUI
+tools (Wireshark) only render on a desktop anyway.
+
+### 1.3 Capture on the host, analyze on your workstation
+
+The natural pattern: capture on the host (where the traffic actually is),
+analyze on your workstation (where the GUI lives). Two ways:
+
+**Capture-then-copy:**
+
+```bash
+# on the host
+sudo tcpdump -i any -w /tmp/event.pcap 'tcp portrange 9001-9005'
+# on your workstation
+scp <user>@<host>:/tmp/event.pcap .
+wireshark event.pcap
+```
+
+**Live-stream over SSH** (no file on disk):
+
+```bash
+ssh <user>@<host> "sudo tcpdump -i any -U -w - 'tcp portrange 9001-9005'" \
+  | wireshark -k -i -
+```
+
+The `-w -` tells tcpdump to write to stdout; the `wireshark -k -i -` reads a
+live capture from stdin. Useful for incident-style live monitoring.
+
+### 1.4 Inspect the running stack
+
+For container introspection from inside the blue shell on the host:
+
+```bash
+docker compose ps                # what's actually running
+docker compose logs -f <chal>    # follow live logs
+dive <image-name>                # explore a chal image layer-by-layer
+docker stats                     # live CPU/mem/net per container
+```
 
 ---
 

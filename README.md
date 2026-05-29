@@ -12,13 +12,35 @@ the role-based tool shells see `RED-TEAM.md` (offense) and `BLUE-TEAM.md`
 
 ## Contents
 
-1. [The big picture](#1-the-big-picture) — two-network safety model, threat model
-2. [Components](#2-components) — services, per-challenge hardening, where Nix fits
-3. [Install from a fresh Ubuntu host](#3-install-from-a-fresh-ubuntu-host) — OS, Docker, Nix, secrets, build, isolation check, firewall, SSH
-4. [Day-to-day operations](#4-day-to-day-operations) — ops, team shells, updates, teardown
-5. [Why the cryptic lines are written the way they are](#5-why-the-cryptic-lines-are-written-the-way-they-are) — compile flags, socat, multi-stage, perms, secret gen, isolation check, ufw scoping
-6. [Troubleshooting](#6-troubleshooting)
-7. [Adding your own challenges](#7-adding-your-own-challenges)
+- [1. The big picture](#1-the-big-picture)
+  - [Threat model in one paragraph](#threat-model-in-one-paragraph)
+- [2. Components](#2-components)
+  - [Per-challenge hardening](#per-challenge-hardening)
+  - [Where Nix fits (and where it doesn't)](#where-nix-fits-and-where-it-doesnt)
+- [3. Install from a fresh Ubuntu host](#3-install-from-a-fresh-ubuntu-host)
+  - [3.1 Host OS — Ubuntu Server 24.04 LTS](#31-host-os--ubuntu-server-2404-lts)
+  - [3.2 Docker Engine + Compose plugin](#32-docker-engine--compose-plugin)
+  - [3.3 Nix (optional, for authoring + team shells)](#33-nix-optional-for-authoring--team-shells)
+  - [3.4 Project + secrets](#34-project--secrets)
+  - [3.5 Build + launch](#35-build--launch)
+  - [3.6 Verify isolation BEFORE anyone plays](#36-verify-isolation-before-anyone-plays)
+  - [3.7 Host firewall (ufw)](#37-host-firewall-ufw)
+  - [3.8 SSH access — what it grants, and hardening](#38-ssh-access--what-it-grants-and-hardening)
+- [4. Day-to-day operations](#4-day-to-day-operations)
+  - [Team tool shells during the event](#team-tool-shells-during-the-event)
+  - [Updating / rebuilding cleanly](#updating--rebuilding-cleanly)
+  - [Teardown](#teardown)
+- [5. Why the cryptic lines are written the way they are](#5-why-the-cryptic-lines-are-written-the-way-they-are)
+  - [`nix develop`](#nix-develop)
+  - [The pwn compile line](#the-pwn-compile-line)
+  - [The socat service line](#the-socat-service-line)
+  - [Dockerfile multi-stage build](#dockerfile-multi-stage-build)
+  - [The chmod lines](#the-chmod-lines)
+  - [The secret generator](#the-secret-generator)
+  - [The isolation verification](#the-isolation-verification)
+  - [The firewall scoping](#the-firewall-scoping)
+- [6. Troubleshooting](#6-troubleshooting)
+- [7. Adding your own challenges](#7-adding-your-own-challenges)
 
 ---
 

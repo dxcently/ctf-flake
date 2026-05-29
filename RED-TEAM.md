@@ -13,7 +13,44 @@ defense kit see `BLUE-TEAM.md`.
 
 ---
 
-## 1. Enter the shell
+## 1. How to connect
+
+### 1.1 Reach the CTF host
+
+Ask an organizer for the host's LAN address — typically something like
+`192.168.50.x`. The host publishes only these ports to your subnet:
+
+| Port  | Service             | How you use it          |
+|-------|---------------------|-------------------------|
+| 8000  | CTFd scoreboard     | Browser                 |
+| 9001  | web-cookie-monster  | `curl`, browser, Burp   |
+| 9002  | pwn-stackoverflow   | `nc <host> 9002`        |
+| 9003  | crypto-xor          | `curl`, browser         |
+| 9004  | forensics-hidden    | `curl`, browser         |
+| 9005  | web-filevault       | `curl`, browser         |
+
+You can attack any of those directly from your workstation — no shell on the
+host required.
+
+### 1.2 SSH to the host (only if you need a host shell)
+
+You probably don't. Attacking happens from your laptop. SSH onto the host is
+for organizers, not players. If an organizer has given you an account:
+
+```bash
+ssh <user>@<host>
+```
+
+Then `cd ctf-flake` to reach the repo. See README §3.8 for what SSH access
+grants and why it's locked down (it's strictly more powerful than attacking a
+challenge — keys only, no root, no `docker` group for non-admins).
+
+### 1.3 Enter the red shell
+
+Two ways to use the offense kit:
+
+**On your own workstation** (recommended for GUI tools like Burp and Ghidra).
+Requires Nix installed locally. Clone the repo, then:
 
 ```bash
 nix develop .#red
@@ -23,8 +60,24 @@ First entry pulls a large closure (Ghidra, Burp, Metasploit, Wireshark — each
 substantial). Plan for it before a session, not during. Subsequent entries are
 instant from the Nix store. Leave the shell and the tools are gone.
 
-There is also a leaner `nix develop .#player` shell sized to exactly these five
-challenges. Use it when you don't need the full arsenal.
+**On the CTF host via SSH** (CLI tools only — the host is headless). Same
+command, run from inside the repo.
+
+There is also a leaner `nix develop .#player` shell sized to exactly these
+five challenges. Use it when you don't need the full arsenal.
+
+### 1.4 Pivoting GUI tools to remote services (SSH tunnel)
+
+If a service isn't published to your LAN but you want to hit it with a GUI
+tool on your workstation, forward the port over SSH:
+
+```bash
+ssh -L 9001:localhost:9001 <user>@<host>
+# Now http://localhost:9001 on your workstation = port 9001 on the host.
+```
+
+For LAN-published challenges (9001–9005) this is unnecessary — connect
+straight to the host's IP.
 
 ---
 
